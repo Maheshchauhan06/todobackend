@@ -1,38 +1,43 @@
 const express = require("express");
 const app = express();
-const mysql = require("mysql2");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const mongoose = require("mongoose");
 
-const db = mysql.createPool({
-  host: "127.0.0.1",
-  user: "root",
-  password: "mchauhan66@gmail",
-  database: "todoapp",
+mongoose.connect(
+  "mongodb+srv://mahesh:mchauhan66@cluster0.kqogx1f.mongodb.net/todoapp?retryWrites=true&w=majority",
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  }
+);
+
+const todoSchema = new mongoose.Schema({
+  title: String,
+  content: String,
 });
+
+const Todo = mongoose.model("Todo", todoSchema);
 
 app.use(cors());
 app.use(express.json());
-
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.delete("/api/delete/:id", (req, res) => {
   const id = req.params.id;
-  const sqldelete = "DELETE FROM todoapp WHERE id = ?";
-  db.query(sqldelete, id, (err, result) => {
+  Todo.findByIdAndDelete(id, (err, result) => {
     if (err) {
       console.log(err);
       res.status(500).send("Error deleting task");
     } else {
-      console.log(result);
+      console.log(id);
       res.status(200).send("Task deleted successfully");
     }
   });
 });
 
 app.get("/api/get", (req, res) => {
-  const sqlselect = "SELECT * FROM todoapp";
-  db.query(sqlselect, (err, result) => {
+  Todo.find((err, result) => {
     console.log(result);
     res.send(result);
   });
@@ -42,8 +47,11 @@ app.post("/api/insert", (req, res) => {
   const title = req.body.title;
   const value = req.body.content;
   console.log(value);
-  const sqlInsert = "INSERT INTO todoapp (title, input) VALUES (?,?)";
-  db.query(sqlInsert, [title, value], (err, result) => {
+  const todo = new Todo({
+    title: title,
+    content: value,
+  });
+  todo.save((err, result) => {
     if (err) {
       console.log(err);
       res.status(500).send("Error occurred while inserting data");
