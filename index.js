@@ -23,24 +23,27 @@ app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.delete("/api/delete/:id", (req, res) => {
+app.delete("/api/delete/:id", async (req, res) => {
   const id = req.params.id;
-  Todo.findByIdAndDelete(id, (err, result) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send("Error deleting task");
-    } else {
-      console.log(id);
-      res.status(200).send("Task deleted successfully");
-    }
-  });
+  try {
+    const result = await Todo.findByIdAndDelete(id);
+    console.log(id);
+    res.status(200).send("Task deleted successfully");
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Error deleting task");
+  }
 });
 
-app.get("/api/get", (req, res) => {
-  Todo.find((err, result) => {
+app.get("/api/get", async (req, res) => {
+  try {
+    const result = await Todo.find();
     console.log(result);
     res.send(result);
-  });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Error occurred while fetching data");
+  }
 });
 
 app.post("/api/insert", (req, res) => {
@@ -51,15 +54,16 @@ app.post("/api/insert", (req, res) => {
     title: title,
     content: value,
   });
-  todo.save((err, result) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send("Error occurred while inserting data");
-    } else {
+  todo
+    .save()
+    .then((result) => {
       console.log(result);
       res.send("Data inserted successfully");
-    }
-  });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).send("Error occurred while inserting data");
+    });
 });
 
 app.get("/", (req, res) => {
